@@ -1,0 +1,88 @@
+import pandas as pd
+from google.colab import files
+import numpy as np
+from matplotlib import pyplot as plt
+
+file_age = pd.read_csv("/content/pop.csv")
+file_zillow = pd.read_csv("/content/zip_codes.csv")
+
+age = pd.DataFrame(file_age)
+df = pd.DataFrame(file_zillow)
+
+i = 0
+for index, row in age.iterrows():
+  if(row['zip'] not in df['RegionName'].values):
+    age.drop(index, inplace=True)
+
+age.set_index('zip', inplace=True)
+df.set_index('RegionName', inplace=True)
+
+df = df[['RegionID']]
+df = df.join(age)
+
+median = {}
+ for index, row in df.iterrows():
+  bin = 0
+
+  age = row['age_median']
+
+  if(age >= 30 and age <= 39):
+    bin = 10
+  elif(age >= 40 and age <= 54):
+      bin = 9
+  elif(age >= 55 and age <= 64):
+      bin = 8
+  elif(age >= 65 and age <= 73):
+      bin = 7
+  elif(age >= 27 and age <= 29):
+      bin = 6
+  elif(age >= 22 and age <= 26):
+      bin = 5
+  elif(age >= 74 and age <= 94):
+      bin = 4
+  elif(age >= 21 and age <= 18):
+      bin = 3
+  elif(age >= 95):
+      bin = 2
+  elif(age <= 17):
+      bin = 1
+
+  median[index] = bin
+
+tmo = pd.DataFrame.from_dict(median, orient='index')
+
+tmo.to_csv("MedianAge.csv")
+files.download("MedianAge.csv")
+
+population = {}
+for index, row in df.iterrows():
+  bin = 0
+  pop = row['population']
+
+  if(pop >= 75000):
+    bin = 100
+  elif(pop >= 61000 and pop < 75000):
+      bin = 90
+  elif(pop >= 50000 and pop < 61000):
+      bin = 80
+  elif(pop >= 38000 and pop < 50000):
+      bin = 70
+  elif(pop >= 22000 and pop < 38000):
+      bin = 60
+  elif(pop >= 15000 and pop < 22000):
+      bin = 50
+  elif(pop >= 8000 and pop < 15000):
+      bin = 40
+  elif(pop >= 6000 and pop < 8000):
+      bin = 30
+  elif(pop >= 3000 and pop < 6000):
+      bin = 20 
+  elif(pop <= 1500):
+      bin = 10
+
+  population[index] = bin
+
+tmo = pd.DataFrame.from_dict(population, orient='index')
+
+tmo.to_csv("Population.csv")
+files.download("Population.csv")
