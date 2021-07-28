@@ -1,0 +1,21 @@
+import folium
+import pandas as pd
+import json
+
+#Creating a data frame with just the country codes and the values we want plotted.
+data_to_plot = pd.read_csv('/content/Results.csv')
+data_to_plot.head()
+data_to_plot.drop(columns=['Column1'], inplace=True)
+
+zip_geo = '/content/zcta5.geo.json'
+
+m = folium.Map()
+
+folium.Choropleth(
+    geo_data=zip_geo,
+    data=data_to_plot,
+    columns=['Zips', 'Area'],
+    fill_color = "Blues"
+).add_to(m)
+
+m
