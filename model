@@ -1,0 +1,61 @@
+import pandas as pd
+import numpy as np
+from fbprophet import Prophet
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
+from google.colab import files
+
+#IMPORTING DATA
+file = pd.read_csv("/content/zip_codes.csv")
+
+#CREATING DATAFRAME
+data = pd.DataFrame(file)
+
+#removing useless columns
+col = ["StateName", "State", "City", "Metro", "CountyName", "SizeRank", 
+       "RegionType", "RegionID"]
+data = data.drop(columns = col )
+data = data.rename(columns={"RegionName": "ds"})
+
+#keeping the first 10 rows of the data frame
+df = data[27001:30000]
+print(df)
+
+#Rotating the data 
+df_transposed = df.T
+print(df_transposed)
+
+#removing the first row
+df_transposed.columns = df_transposed.iloc[0]
+df_transposed = df_transposed.drop(df_transposed.index[0]) 
+print(df_transposed)
+
+col = list(df_transposed)
+value_dict = {}
+
+for i in col:
+  dat = {'ds': df_transposed.index, 'y': df_transposed[i]}
+  db = pd.DataFrame(dat, columns = ['ds', 'y'])
+  db.reset_index(drop=True, inplace=True)
+  m = Prophet()
+  m.fit(db)
+
+  future = m.make_future_dataframe(periods=730)
+  future.tail()
+
+  forecast = m.predict(future)
+  forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail()
+
+  metric_df = forecast.set_index('ds')[['yhat']].join(db.set_index('ds').y).reset_index()
+  metric_df.dropna(inplace=True)
+
+  change = df_transposed.iloc[-1][i] - forecast.iloc[-1]['yhat']
+  mse = mean_squared_error(metric_df.y, metric_df.yhat)
+  r2 = r2_score(metric_df.y, metric_df.yhat)
+  mae = mean_absolute_error(metric_df.y, metric_df.yhat)  
+
+  value_dict[i] = {'mse': mse, 'r2': r2, 'mae': mae, 'change': change}
+
+df = pd.DataFrame.from_dict(data=value_dict, orient='index')
+df.to_csv('model10.csv')
+
+files.download('model10.csv')
